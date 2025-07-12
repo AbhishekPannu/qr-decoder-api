@@ -1,6 +1,7 @@
 import os
 import numpy as np
 import cv2
+from pyzbar.pyzbar import decode
 from fastapi import FastAPI, File, UploadFile
 from fastapi.responses import JSONResponse
 import uvicorn
@@ -14,16 +15,15 @@ async def decode_qr(image: UploadFile = File(...)):
         npimg = np.frombuffer(contents, np.uint8)
         img = cv2.imdecode(npimg, cv2.IMREAD_COLOR)
 
-        detector = cv2.QRCodeDetector()
-        data, bbox, _ = detector.detectAndDecode(img)
-
-        if not data:
+        decoded_objs = decode(img)
+        if not decoded_objs:
             return JSONResponse(
                 content={"success": False, "data": None, "message": "No QR code found"},
                 status_code=400
             )
 
-        return {"success": True, "data": [data]}
+        results = [obj.data.decode('utf-8') for obj in decoded_objs]
+        return {"success": True, "data": results}
     
     except Exception as e:
         return JSONResponse(
@@ -32,5 +32,5 @@ async def decode_qr(image: UploadFile = File(...)):
         )
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 8000))  # Use dynamic port from Railway or 8000 locally
+    port = int(os.environ.get("PORT", 8000))
     uvicorn.run("main:app", host="0.0.0.0", port=port)
