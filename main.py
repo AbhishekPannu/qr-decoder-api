@@ -1,10 +1,8 @@
-import os
 import numpy as np
 import cv2
 from pyzbar.pyzbar import decode
 from fastapi import FastAPI, File, UploadFile
 from fastapi.responses import JSONResponse
-import uvicorn
 
 app = FastAPI()
 
@@ -24,13 +22,9 @@ async def decode_qr(image: UploadFile = File(...)):
 
         results = [obj.data.decode('utf-8') for obj in decoded_objs]
         return {"success": True, "data": results}
-    
+
     except Exception as e:
         return JSONResponse(
             content={"success": False, "message": f"Error: {str(e)}"},
             status_code=500
         )
-
-if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 8000))
-    uvicorn.run("main:app", host="0.0.0.0", port=port)
